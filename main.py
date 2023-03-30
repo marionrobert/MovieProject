@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from wtforms import StringField, SubmitField, FloatField
 from wtforms.validators import DataRequired
 import requests
 import os
@@ -47,11 +47,29 @@ db.create_all()
 # db.session.commit()
 
 
+class EditForm(FlaskForm):
+    rating = FloatField(label="Your rating out of 10 e.g. 7.3", validators=[DataRequired()])
+    review = StringField(label="Your review", validators=[DataRequired()])
+    submit = SubmitField(label="Done")
+
+
 @app.route("/")
 def home():
     # get all movies from the db
     all_movies = db.session.query(Movie).all()
     return render_template("index.html", movies=all_movies)
+
+
+@app.route("/edit/<int:id>", methods=["POST", "GET"])
+def edit(id):
+    movie_to_update = db.session.execute(db.select(Movie).filter_by(id=id)).scalar_one()
+    edit_form = EditForm()
+    if edit_form.validate_on_submit():
+        movie_to_update.rating = edit_form.rating.data
+        movie_to_update.review = edit_form.review.data
+        db.session.commit()
+        return redirect(url_for("home"))
+    return render_template("edit.html", movie=movie_to_update, form=edit_form)
 
 
 if __name__ == '__main__':
