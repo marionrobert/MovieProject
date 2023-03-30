@@ -60,8 +60,14 @@ class AddForm(FlaskForm):
 
 @app.route("/")
 def home():
-    # get all movies from the db
-    all_movies = db.session.query(Movie).all()
+    # This line creates a list of all the movies sorted by rating
+    all_movies = Movie.query.order_by(Movie.rating).all()
+
+    # This line loops through all the movies
+    for i in range(len(all_movies)):
+        # This line gives each movie a new ranking reversed from their order in all_movies
+        all_movies[i].ranking = len(all_movies) - i
+    db.session.commit()
     return render_template("index.html", movies=all_movies)
 
 
@@ -98,7 +104,6 @@ def add():
             "query": title
         }
         response = requests.get(tmdb_url, params=params)
-        print(response.status_code)
         data = response.json()["results"]
         return render_template("select.html", options=data)
     return render_template("add.html", form=add_form)
