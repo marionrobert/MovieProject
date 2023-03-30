@@ -27,30 +27,31 @@ class Movie(db.Model):
     year = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(250), nullable=False)
     rating = db.Column(db.Float(), nullable=False)
-    ranking = db.Column(db.Integer, nullable=False)
+    ranking = db.Column(db.Integer, nullable=False, unique=True)
     review = db.Column(db.String(250), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
 
 
 db.create_all()
 
-# new_movie = Movie(
-#     title="Phone Booth",
-#     year=2002,
+# movie = Movie(
+#     title="Blabla",
+#     year=2001,
 #     description="Publicist Stuart Shepard finds himself trapped in a phone booth, pinned down by an extortionist's sniper rifle. Unable to leave or receive outside help, Stuart's negotiation with the caller leads to a jaw-dropping climax.",
-#     rating=7.3,
-#     ranking=10,
+#     rating=8.3,
+#     ranking=9,
 #     review="My favourite character was the caller.",
 #     img_url="https://image.tmdb.org/t/p/w500/tjrX2oWRCM3Tvarz38zlZM7Uc10.jpg"
 # )
-# db.session.add(new_movie)
+# db.session.add(movie)
 # db.session.commit()
 
 
 @app.route("/")
 def home():
     # get all movies from the db
-    return render_template("index.html")
+    all_movies = db.session.query(Movie).all()
+    return render_template("index.html", movies=all_movies)
 
 
 if __name__ == '__main__':
