@@ -26,9 +26,9 @@ class Movie(db.Model):
     title = db.Column(db.String(250), unique=True, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(250), nullable=False)
-    rating = db.Column(db.Float(), nullable=False)
-    ranking = db.Column(db.Integer, nullable=False, unique=True)
-    review = db.Column(db.String(250), nullable=False)
+    rating = db.Column(db.Float())
+    ranking = db.Column(db.Integer)
+    review = db.Column(db.String(250))
     img_url = db.Column(db.String(250), nullable=False)
 
 
@@ -51,6 +51,11 @@ class EditForm(FlaskForm):
     rating = FloatField(label="Your rating out of 10 e.g. 7.3", validators=[DataRequired()])
     review = StringField(label="Your review", validators=[DataRequired()])
     submit = SubmitField(label="Done")
+
+
+class AddForm(FlaskForm):
+    title = StringField(label="Movie Title", validators=[DataRequired()])
+    submit = SubmitField(label="Add movie")
 
 
 @app.route("/")
@@ -80,6 +85,44 @@ def delete(id):
         db.session.delete(book_to_delete)
         db.session.commit()
     return redirect(url_for("home"))
+
+
+@app.route("/add", methods=["POST", "GET"])
+def add():
+    add_form = AddForm()
+    if add_form.validate_on_submit():
+        title = add_form.title.data
+        tmdb_url = "https://api.themoviedb.org/3/search/movie"
+        params = {
+            "api_key": os.environ["api_key"],
+            "query": title
+        }
+        response = requests.get(tmdb_url, params=params)
+        print(response.status_code)
+        data = response.json()["results"]
+        return render_template("select.html", options=data)
+    return render_template("add.html", form=add_form)
+
+
+@app.route("/find")
+def find_movie():
+    movie_api_id = request.args.get("id")
+    if movie_api_id:
+        movie_api_url = f"https://api.themoviedb.org/3/movie/{movie_api_id}"
+        # The language parameter is optional, if you were making the website for a different audience
+        # e.g. Hindi speakers then you might choose "hi-IN"
+        response = requests.get(movie_api_url, params={"api_key": os.environ["api_key"], "language": "en-US"})
+        data = response.json()
+        new_movie = Movie(
+            title=data["title"],
+            # The data in release_date includes month and day, we will want to get rid of.
+            year=data["release_date"].split("-")[0],
+            img_url=f"https://image.tmdb.org/t/p/w500{data['poster_path']}",
+            description=data["overview"]
+        )
+        db.session.add(new_movie)
+        db.session.commit()
+        return redirect(url_for("edit", id=new_movie.id))
 
 
 if __name__ == '__main__':
