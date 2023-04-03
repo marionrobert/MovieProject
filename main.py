@@ -85,10 +85,9 @@ def edit(id):
 
 @app.route("/delete/<int:id>", methods=['GET'])
 def delete(id):
-    movie_to_delete = db.session.execute(db.select(Movie).filter_by(id=id)).scalar_one()
     if request.method == "GET":
-        book_to_delete = db.session.execute(db.select(Movie).filter_by(id=id)).scalar_one()
-        db.session.delete(book_to_delete)
+        movie_to_delete = db.session.execute(db.select(Movie).filter_by(id=id)).scalar_one()
+        db.session.delete(movie_to_delete)
         db.session.commit()
     return redirect(url_for("home"))
 
